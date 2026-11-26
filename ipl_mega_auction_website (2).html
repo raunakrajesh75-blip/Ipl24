@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101b35">
+<title>IPL Mega Auction Simulator</title>
+<style>
+:root{--navy:#101b35;--navy2:#19294b;--gold:#f5bd43;--bg:#f3f5f9;--card:#fff;--muted:#697386;--green:#168653;--red:#c83d4d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:#172033}
+header{background:linear-gradient(120deg,#0d1730,#243d68);color:white;padding:22px 16px 18px}
+.wrap{max-width:1100px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(23px,5vw,34px);letter-spacing:.4px}.sub{color:#d7e0f2;margin-top:7px;font-size:14px}
+.pill{background:#263e67;color:#ffe3a0;padding:7px 11px;border-radius:20px;font-size:12px;font-weight:bold}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+button,select,input{font:inherit}button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer;transition:.15s}
+button:disabled{opacity:.45;cursor:not-allowed}.tab{background:#263858;color:#eaf0fc}.tab.active{background:var(--gold);color:#18223a}
+main{max-width:1100px;margin:22px auto;padding:0 14px 40px}
+.panel{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 5px 22px #18294d0c;margin-bottom:16px}
+h2{font-size:20px;margin:0 0 14px}.muted{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.team{border:1px solid #e1e6ef;border-radius:12px;padding:12px;background:white}.team.selected{border:2px solid #e1a92d;background:#fffaf0}
+.team strong{display:block;margin-bottom:6px}.team small{color:var(--muted)}
+.btn{background:var(--navy2);color:white}.btn.gold{background:var(--gold);color:#1c263b}.btn.green{background:var(--green);color:white}.btn.red{background:var(--red);color:white}.btn.light{background:#edf1f7;color:#24304a}
+.auction-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.playerbox{background:linear-gradient(145deg,#142344,#29446f);color:white;border-radius:15px;padding:22px;min-height:250px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.player-icon{width:76px;height:76px;border-radius:50%;background:#ffffff18;display:grid;place-items:center;font-size:38px;margin-bottom:12px}
+.playerbox h2{font-size:27px;margin:3px 0 8px}.player-meta{color:#d5dfef;font-size:13px}.price{font-size:34px;color:#ffd36c;font-weight:800;margin:8px 0}
+.status{display:inline-block;border-radius:20px;padding:6px 11px;font-size:11px;font-weight:bold;background:#e7f7ee;color:#137747}
+.status.unsold{background:#fff0f0;color:#b52d3e}.status.live{background:#fff4d9;color:#8a5c00}
+.bid-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.bidteam{border:1px solid #e4e8ef;border-radius:11px;padding:11px}
+.bidteam .name{font-weight:bold}.bidteam .cash{font-size:12px;color:var(--muted);margin:5px 0 9px}
+.bidteam button{width:100%;padding:10px 7px;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:#f5f7fb;border-radius:12px;padding:12px}.stat b{font-size:20px;display:block}.stat span{font-size:11px;color:var(--muted)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+input,select{width:100%;padding:11px;border:1px solid #dce2eb;border-radius:9px;background:white}
+.formrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid #edf0f4;white-space:nowrap}th{color:var(--muted);font-size:11px;text-transform:uppercase}
+.squad-list{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.player-row{border:1px solid #e5e9f0;padding:11px;border-radius:10px}
+.hidden{display:none!important}.notice{padding:11px;border-radius:10px;background:#fff7e5;color:#78500a;font-size:13px;margin-top:10px}
+footer{text-align:center;color:#7b8494;font-size:12px;padding:10px}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.auction-layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){main{padding-left:10px;padding-right:10px}.panel{padding:14px}.squad-list{grid-template-columns:1fr}.stats{gap:6px}.stat{padding:9px}.stat b{font-size:17px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+ <div class="top"><div><h1>🏏 IPL MEGA AUCTION</h1><div class="sub">Build your dream squad • Manual bidding simulator</div></div><span class="pill">AUCTION SEASON · CUSTOM</span></div>
+ <nav>
+  <button class="tab active" data-tab="auction">🔨 Auction</button>
+  <button class="tab" data-tab="squads">👥 Review Squads</button>
+  <button class="tab" data-tab="sold">🏆 Sold Players</button>
+  <button class="tab" data-tab="history">📋 Bid History</button>
+  <button class="tab" data-tab="settings">⚙️ Setup</button>
+ </nav>
+</div></header>
+<main>
+<section id="auction" class="view">
+ <div class="panel">
+  <div class="row"><h2>Team purse overview</h2><span class="muted" id="team-count">Choose 5 teams in Setup</span></div>
+  <div class="grid" id="team-overview"></div>
+ </div>
+ <div class="auction-layout">
+  <div class="panel">
+   <div class="row"><h2>Player on the block</h2><span id="auction-status" class="status live">WAITING</span></div>
+   <div class="playerbox">
+    <div class="player-icon">🏏</div>
+    <div class="player-meta" id="player-category">PLAYER AUCTION</div>
+    <h2 id="player-name">Select teams to begin</h2>
+    <div class="player-meta" id="player-details">Set up your auction in the Setup tab</div>
+    <div class="price" id="current-bid">₹0.00 Cr</div>
+    <div class="player-meta" id="bid-leader">Current highest bid</div>
+    <div id="winner-banner" class="pill hidden" style="margin-top:12px;background:#f5bd43;color:#172033">SOLD TO TEAM</div>
+   </div>
+   <div class="stats" style="margin-top:12px">
+    <div class="stat"><b id="base-price">₹0</b><span>Base price</span></div>
+    <div class="stat"><b id="player-number">0/0</b><span>Player number</span></div>
+    <div class="stat"><b id="sold-count">0</b><span>Players sold</span></div>
+   </div>
+   <div style="margin-top:14px" class="formrow">
+    <button class="btn light" id="prev-player">← Previous</button>
+    <button class="btn light" id="next-player">Next player →</button>
+   </div>
+   <div class="row" style="margin-top:10px;flex-wrap:wrap">
+    <button class="btn green" id="sell-player">🔨 SOLD to highest bidder</button>
+    <button class="btn red" id="unsold-player">Mark UNSOLD</button>
+   </div>
+   <div class="notice">Click a team's BID button to raise the current price. When bidding is over, award the player to the highest bidder.</div>
+  </div>
+  <div class="panel">
+   <h2>Place your bids</h2>
+   <div class="formrow" style="margin-bottom:12px">
+    <div><label class="muted" for="increment">Bid increment (₹ Cr)</label><select id="increment"><option value=".25">0.25</option><option value=".5" selected>0.50</option><option value="1">1.00</option><option value="2">2.00</option></select></div>
+    <div><label class="muted" for="custom-bid">Custom next bid</label><input id="custom-bid" type="number" min="0" step=".25" placeholder="Optional"></div>
+   </div>
+   <div class="formrow">
+    <div><label class="muted" for="bidding-team">Choose one team to bid</label><select id="bidding-team"></select></div>
+    <div style="display:flex;align-items:end"><button class="btn gold" id="place-selected-bid" style="width:100%">Place bid</button></div>
+   </div>
+   <div id="selected-team-info" class="muted" style="margin-top:9px">Choose a team to place the next bid.</div>
+   <div style="margin-top:18px"><h2>Current player queue</h2><div id="queue" class="muted">No player list loaded.</div></div>
+  </div>
+ </div>
+</section>
+<section id="squads" class="view hidden">
+ <div class="panel"><h2>Review team squads</h2><div class="muted">Choose a team to see its purchased players, purse and squad composition.</div>
+  <div style="margin:14px 0"><select id="squad-team"></select></div>
+  <div id="squad-summary" class="stats"></div><div style="height:14px"></div><div id="squad-players" class="squad-list"></div>
+ </div>
+</section>
+<section id="sold" class="view hidden">
+ <div class="panel">
+  <h2>🏆 Sold players by team</h2>
+  <p class="muted">Choose a team to review every player it has won at auction and the winning price.</p>
+  <div style="margin:14px 0"><select id="sold-team"></select></div>
+  <div id="sold-team-summary" class="stats"></div>
+  <div style="height:14px"></div>
+  <div id="sold-team-players" class="squad-list"></div>
+ </div>
+</section>
+<section id="history" class="view hidden">
+ <div class="panel"><div class="row"><h2>Bid history</h2><button class="btn light" id="export-history">Export CSV</button></div><div class="tablewrap"><table><thead><tr><th>Time</th><th>Player</th><th>Team</th><th>Bid</th><th>Result</th></tr></thead><tbody id="history-body"></tbody></table></div></div>
+</section>
+<section id="settings" class="view hidden">
+ <div class="panel"><h2>⚙️ Auction setup</h2><p class="muted">Select exactly five teams. Each team starts with ₹100 crore.</p>
+  <div id="team-picker" class="grid"></div>
+  <div class="formrow" style="margin-top:16px">
+   <div><label class="muted">Purse per team (₹ Cr)</label><input id="purse-setting" type="number" min="1" value="100"></div>
+   <div><label class="muted">Default base price (₹ Cr)</label><input id="base-setting" type="number" min=".05" step=".05" value="2"></div>
+  </div>
+  <h2 style="margin-top:20px">Player list</h2><p class="muted">Edit or add players before starting. One player is auctioned at a time.</p>
+  <div class="formrow"><input id="new-name" placeholder="Player name"><select id="new-role"><option>Batter</option><option>Bowler</option><option>All-rounder</option><option>Wicketkeeper</option></select></div>
+  <div class="formrow" style="margin-top:8px"><input id="new-country" placeholder="Country" value="India"><input id="new-base" type="number" min=".05" step=".05" placeholder="Base price (Cr)"></div>
+  <button class="btn" id="add-player" style="margin-top:8px">＋ Add player</button>
+  <div id="player-editor" style="margin-top:12px"></div>
+  <div class="row" style="margin-top:18px;flex-wrap:wrap"><button class="btn gold" id="apply-setup">Save setup & start auction</button><button class="btn red" id="reset-auction">Reset entire auction</button></div>
+  <p class="muted" style="margin-top:12px">Your auction is saved in this browser on this device. Use Export CSV to keep a separate bid record.</p>
+ </div>
+</section>
+<footer>Fan-made IPL auction simulator • Not affiliated with the official IPL or BCCI</footer>
+</main>
+<script>
+const franchises=[
+ {id:'CSK',name:'Chennai Super Kings',color:'#f5c542'},
+ {id:'MI',name:'Mumbai Indians',color:'#1768bd'},
+ {id:'RCB',name:'Royal Challengers Bengaluru',color:'#bd2835'},
+ {id:'KKR',name:'Kolkata Knight Riders',color:'#573d91'},
+ {id:'RR',name:'Rajasthan Royals',color:'#e36ca5'},
+ {id:'SRH',name:'Sunrisers Hyderabad',color:'#ef7625'},
+ {id:'DC',name:'Delhi Capitals',color:'#2878c7'},
+ {id:'PBKS',name:'Punjab Kings',color:'#d9424c'},
+ {id:'GT',name:'Gujarat Titans',color:'#3e637e'},
+ {id:'LSG',name:'Lucknow Super Giants',color:'#36a5b8'}
+];
+const defaultPlayers=[
+ ['Virat Kohli','Batter','India',2],['Rohit Sharma','Batter','India',2],['MS Dhoni','Wicketkeeper','India',1],
+ ['Jasprit Bumrah','Bowler','India',2],['Hardik Pandya','All-rounder','India',2],['Suryakumar Yadav','Batter','India',2],
+ ['Ravindra Jadeja','All-rounder','India',2],['Rashid Khan','Bowler','Afghanistan',2],['Jos Buttler','Wicketkeeper','England',2],
+ ['Andre Russell','All-rounder','West Indies',2],['Chris Gayle','Batter','West Indies',1],['AB de Villiers','Batter','South Africa',1],
+ ['Shubman Gill','Batter','India',2],['Rishabh Pant','Wicketkeeper','India',2],['Pat Cummins','Bowler','Australia',2],
+ ['Trent Boult','Bowler','New Zealand',2],['Sanju Samson','Wicketkeeper','India',2],['Glenn Maxwell','All-rounder','Australia',2],
+ ['Yuzvendra Chahal','Bowler','India',2],['KL Rahul','Batter','India',2]
+].map((p,i)=>({id:i+1,name:p[0],role:p[1],country:p[2],base:p[3]}));
+let state={selected:['CSK','MI','RCB','KKR','RR'],purse:100,players:defaultPlayers,index:0,teams:[],leader:null,bid:0,result:'WAITING',history:[],soldIds:[],unsoldIds:[]};
+const $=id=>document.getElementById(id), money=n=>'₹'+Number(n||0).toFixed(2)+' Cr';
+function save(){localStorage.setItem('iplAuctionSimV1',JSON.stringify(state))}
+function load(){try{let x=JSON.parse(localStorage.getItem('iplAuctionSimV1'));if(x&&x.players&&x.teams)state=x}catch(e){}}
+function initTeams(){state.teams=state.selected.map(id=>{let old=state.teams.find(t=>t.id===id);return old||{...franchises.find(f=>f.id===id),purse:Number(state.purse),squad:[]}})}
+function current(){return state.players[state.index]}
+function remainingPlayers(){return state.players.filter(p=>!state.soldIds.includes(p.id)&&!state.unsoldIds.includes(p.id))}
+function setStatus(s){state.result=s;save();render()}
+function render(){
+ renderOverview();renderAuction();renderBids();renderSquads();renderSold();renderHistory();renderPicker();renderEditor();renderQueue();
+}
+function renderOverview(){
+ $('team-count').textContent=state.teams.length+' of 5 teams selected';
+ $('team-overview').innerHTML=state.teams.map(t=>`<div class="team"><strong>${t.id}</strong><small>${t.squad.length} players</small><div style="font-weight:bold;margin-top:7px">${money(t.purse)}</div><small>remaining</small></div>`).join('');
+}
+function renderAuction(){
+ let p=current();let status=$('auction-status');
+ if(!p){$('player-name').textContent='Auction complete';$('player-details').textContent='All players have been processed.';$('player-category').textContent='AUCTION FINISHED';$('current-bid').textContent='—';$('bid-leader').textContent='';status.textContent='COMPLETE';status.className='status';$('base-price').textContent='—';$('player-number').textContent=state.players.length+'/'+state.players.length;$('sold-count').textContent=state.soldIds.length;$('sell-player').disabled=true;$('unsold-player').disabled=true;return}
+ $('player-name').textContent=p.name;$('player-details').textContent=p.country+' • '+p.role;$('player-category').textContent='PLAYER '+(state.index+1)+' / '+state.players.length;
+ $('current-bid').textContent=money(state.bid||p.base);
+ if(state.result==='SOLD' && state.leader) $('bid-leader').textContent='🏆 WINNER: '+state.leader+' — '+franchises.find(f=>f.id===state.leader).name;
+ else if(state.result==='UNSOLD') $('bid-leader').textContent='This player remained unsold.';
+ else $('bid-leader').textContent=state.leader?'Current highest bidder: '+state.leader:'No bids yet — base price '+money(p.base);
+ $('base-price').textContent=money(p.base);$('player-number').textContent=(state.index+1)+'/'+state.players.length;$('sold-count').textContent=state.soldIds.length;
+ status.textContent=state.result;status.className='status '+(state.result==='UNSOLD'?'unsold':state.result==='LIVE'?'live':'');
+ let banner=$('winner-banner');
+ if(state.result==='SOLD'&&state.leader){banner.classList.remove('hidden');banner.textContent='🏆 SOLD TO '+state.leader+' FOR '+money(state.bid);}
+ else banner.classList.add('hidden');
+ $('sell-player').disabled=state.result!=='LIVE'||!state.leader;$('unsold-player').disabled=state.result!=='LIVE';
+ $('prev-player').disabled=state.index===0;$('next-player').disabled=state.result==='LIVE'&&!!state.leader;
+}
+function renderBids(){
+ let p=current(),select=$('bidding-team');
+ if(!p){select.innerHTML='';$('selected-team-info').textContent='Auction finished.';$('place-selected-bid').disabled=true;return}
+ let previous=select.value;
+ select.innerHTML=state.teams.map(t=>`<option value="${t.id}">${t.id} — ${t.name}</option>`).join('');
+ if(state.teams.some(t=>t.id===previous))select.value=previous;
+ let chosen=state.teams.find(t=>t.id===select.value);
+ let next=state.leader?state.bid+Number($('increment').value):p.base;
+ $('selected-team-info').textContent=chosen?`${chosen.id} purse: ${money(chosen.purse)} • Next valid bid: ${money(next)}${state.leader?' • Current leader: '+state.leader:''}`:'No teams selected.';
+ $('place-selected-bid').disabled=!chosen||state.result!=='LIVE'||state.leader===chosen.id||chosen.purse+1e-9<next;
+ $('place-selected-bid').textContent=state.leader===chosen?.id?'This team is leading':'Place bid for '+(chosen?.id||'team');
+}
+window.placeBid=function(id){
+ let p=current(),t=state.teams.find(x=>x.id===id);if(!p||!t||state.result!=='LIVE'||state.leader===id)return;
+ let custom=Number($('custom-bid').value),next=state.leader?state.bid+Number($('increment').value):p.base;
+ if(custom>0)next=custom;
+ if(next<(state.leader?state.bid+Number($('increment').value):p.base)||next>t.purse){alert('Bid must be at least the next valid bid and cannot exceed this team purse.');return}
+ state.bid=Number(next.toFixed(2));state.leader=id;
+ state.history.unshift({time:new Date().toLocaleString(),player:p.name,team:id,bid:state.bid,result:'BID'});
+ $('custom-bid').value='';save();render();
+}
+function closePlayer(sold){
+ let p=current();if(!p)return;
+ if(sold&&!state.leader){alert('No team has bid on this player yet. Mark the player unsold instead.');return}
+ if(sold){let t=state.teams.find(x=>x.id===state.leader);t.purse=Number((t.purse-state.bid).toFixed(2));t.squad.push({...p,price:state.bid});state.soldIds.push(p.id);state.history.unshift({time:new Date().toLocaleString(),player:p.name,team:t.id,bid:state.bid,result:'SOLD'});}
+ else{state.unsoldIds.push(p.id);state.history.unshift({time:new Date().toLocaleString(),player:p.name,team:'—',bid:state.bid||p.base,result:'UNSOLD'});}
+ state.result=sold?'SOLD':'UNSOLD';save();render();
+}
+function move(delta){
+ if(state.result==='LIVE'&&state.leader){alert('Close the bidding first: award the player or mark them unsold.');return}
+ let n=state.index+delta;if(n<0||n>=state.players.length)return;
+ state.index=n;state.leader=null;state.bid=0;state.result='LIVE';save();render();
+}
+function renderQueue(){
+ let p=current();let remaining=state.players.slice(state.index+1);
+ $('queue').innerHTML=p?`<b>Now:</b> ${p.name}<br><br><b>Up next:</b> ${remaining.slice(0,5).map(x=>x.name).join(' · ')||'No more players'}`:'Auction complete';
+}
+function renderSquads(){
+ $('squad-team').innerHTML=state.teams.map(t=>`<option value="${t.id}">${t.id} — ${t.name}</option>`).join('');
+ let id=$('squad-team').value||state.teams[0]?.id,t=state.teams.find(x=>x.id===id);
+ if(!t){$('squad-summary').innerHTML='';$('squad-players').innerHTML='';return}
+ let spent=state.purse-t.purse,roles=['Batter','Bowler','All-rounder','Wicketkeeper'];
+ $('squad-summary').innerHTML=`<div class="stat"><b>${t.squad.length}</b><span>Players bought</span></div><div class="stat"><b>${money(t.purse)}</b><span>Purse remaining</span></div><div class="stat"><b>${money(spent)}</b><span>Total spent</span></div>`;
+ $('squad-players').innerHTML=t.squad.length?t.squad.map(p=>`<div class="player-row"><b>${p.name}</b><div class="muted">${p.role} • ${p.country}</div><div style="margin-top:7px;font-weight:bold">${money(p.price)}</div></div>`).join(''):'<p class="muted">No players purchased by this team yet.</p>';
+}
+function renderSold(){
+ let select=$('sold-team');if(!select)return;
+ let previous=select.value;
+ select.innerHTML=state.teams.map(t=>`<option value="${t.id}">${t.id} — ${t.name}</option>`).join('');
+ if(state.teams.some(t=>t.id===previous))select.value=previous;
+ let t=state.teams.find(x=>x.id===select.value);
+ if(!t){$('sold-team-summary').innerHTML='';$('sold-team-players').innerHTML='<p class="muted">Select teams in Setup first.</p>';return}
+ let spent=state.purse-t.purse;
+ $('sold-team-summary').innerHTML=`<div class="stat"><b>${t.squad.length}</b><span>Players won</span></div><div class="stat"><b>${money(spent)}</b><span>Total winning bids</span></div><div class="stat"><b>${money(t.purse)}</b><span>Purse remaining</span></div>`;
+ $('sold-team-players').innerHTML=t.squad.length?t.squad.map((p,i)=>`<div class="player-row"><div class="muted">SOLD PLAYER ${i+1}</div><b>${p.name}</b><div class="muted">${p.role} • ${p.country}</div><div style="margin-top:7px;font-weight:bold;color:#168653">🏆 Winning team: ${t.id}</div><div style="margin-top:4px;font-weight:bold">${money(p.price)}</div></div>`).join(''):'<p class="muted">This team has not won any players yet.</p>';
+}
+function renderHistory(){
+ $('history-body').innerHTML=state.history.length?state.history.map(h=>`<tr><td>${h.time}</td><td>${h.player}</td><td>${h.team}</td><td>${money(h.bid)}</td><td>${h.result}</td></tr>`).join(''):'<tr><td colspan="5" class="muted">No auction activity yet.</td></tr>';
+}
+function renderPicker(){
+ $('team-picker').innerHTML=franchises.map(f=>`<label class="team ${state.selected.includes(f.id)?'selected':''}"><input type="checkbox" value="${f.id}" ${state.selected.includes(f.id)?'checked':''} style="width:auto;margin:0 5px 8px 0" onchange="toggleTeam('${f.id}',this.checked)"><strong>${f.id}</strong><small>${f.name}</small></label>`).join('');
+}
+window.toggleTeam=function(id,checked){
+ if(checked){if(state.selected.length>=5){alert('Choose exactly five teams.');renderPicker();return}state.selected.push(id)}
+ else state.selected=state.selected.filter(x=>x!==id);
+ renderPicker();
+}
+function renderEditor(){
+ $('player-editor').innerHTML=state.players.map((p,i)=>`<div class="row" style="padding:8px 0;border-bottom:1px solid #edf0f4"><div><b>${p.name}</b><div class="muted">${p.role} • Base ${money(p.base)}</div></div><button class="btn light" onclick="removePlayer(${p.id})" ${state.soldIds.includes(p.id)||state.unsoldIds.includes(p.id)?'disabled':''}>Remove</button></div>`).join('');
+}
+window.removePlayer=function(id){if(state.soldIds.includes(id)||state.unsoldIds.includes(id)){alert('A processed player cannot be removed.');return}state.players=state.players.filter(p=>p.id!==id);state.index=Math.min(state.index,state.players.length-1);save();render()};
+function reset(){if(!confirm('Reset all teams, bids, squads and auction progress?'))return;localStorage.removeItem('iplAuctionSimV1');state={selected:['CSK','MI','RCB','KKR','RR'],purse:100,players:defaultPlayers.map(p=>({...p})),index:0,teams:[],leader:null,bid:0,result:'LIVE',history:[],soldIds:[],unsoldIds:[]};initTeams();save();render()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab));if(b.dataset.tab==='squads')renderSquads()}));
+$('sell-player').onclick=()=>closePlayer(true);$('unsold-player').onclick=()=>closePlayer(false);$('prev-player').onclick=()=>move(-1);$('next-player').onclick=()=>move(1);
+$('increment').onchange=renderBids;$('bidding-team').onchange=renderBids;$('place-selected-bid').onclick=()=>{let id=$('bidding-team').value;if(id)placeBid(id)};$('squad-team').onchange=renderSquads;$('sold-team').onchange=renderSold;
+$('add-player').onclick=()=>{
+ let name=$('new-name').value.trim(),base=Number($('new-base').value)||Number($('base-setting').value)||2;
+ if(!name){alert('Enter a player name.');return}
+ state.players.push({id:Math.max(0,...state.players.map(p=>p.id))+1,name,role:$('new-role').value,country:$('new-country').value.trim()||'India',base});
+ $('new-name').value='';$('new-base').value='';save();render();
+};
+$('apply-setup').onclick=()=>{
+ if(state.selected.length!==5){alert('Please select exactly five teams.');return}
+ if(state.soldIds.length||state.unsoldIds.length){alert('Setup is locked after the auction has started. Use Reset Auction to start a new auction with different teams.');return}
+ let purse=Number($('purse-setting').value);if(!(purse>0)){alert('Enter a valid purse.');return}
+ state.purse=purse;initTeams();state.index=0;state.bid=0;state.leader=null;state.result='LIVE';save();render();document.querySelector('[data-tab="auction"]').click();alert('Auction setup saved. The first player is ready!');
+};
+$('reset-auction').onclick=reset;
+$('export-history').onclick=()=>{
+ let rows=[['Time','Player','Team','Bid (Cr)','Result'],...state.history.map(h=>[h.time,h.player,h.team,h.bid,h.result])];
+ let csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
+ let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='ipl-auction-history.csv';a.click();URL.revokeObjectURL(a.href);
+};
+load();if(!state.teams.length)initTeams();if(state.result==='WAITING')state.result='LIVE';render();
+</script>
+</body>
+</html>
